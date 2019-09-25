@@ -1,7 +1,6 @@
 <template>
   <div class="main">
     <h1>Artikel Generator</h1>
-    param = {{ $route.params.filename }} , {{ $route.params.platform }}
     <v-container>
       <v-row>
         <v-col cols="12" md="12">
@@ -40,7 +39,7 @@
         class="elevation-1"
       >
         <template v-slot:item.export="{ item }">
-          <v-icon small class="mdi mdi-blogger" @click="editItem(item)"></v-icon>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+          <v-icon small class="mdi mdi-blogger" @click="generateBlogger(item.name)"></v-icon>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
           <v-icon small class="mdi mdi-wordpress" @click="editItem(item)"></v-icon>
         </template>
 
@@ -49,14 +48,36 @@
         </template>
       </v-data-table>
     </v-card>
+
+    <v-dialog v-model="dialog" fullscreen hide-overlay transition="dialog-bottom-transition">
+      <v-card>
+        <v-toolbar dark color="primary">
+          <v-btn icon dark @click="closeDialog">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+          <v-toolbar-title>Generate {{ this.$route.params.platform }}</v-toolbar-title>
+          <div class="flex-grow-1"></div>
+          <v-toolbar-items>
+            <v-btn dark text @click="closeDialog">Save</v-btn>
+          </v-toolbar-items>
+        </v-toolbar>
+        <blogspot-generator v-if="fileName" v-bind:file-name="fileName" :key="fileName"></blogspot-generator>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script>
+import BlogspotGenerator from "~/components/BlogspotGenerator.vue";
 export default {
+  components: {
+    BlogspotGenerator
+  },
   loading: true,
   data() {
     return {
+      fileName: null,
+      dialog: false,
       file: null,
       loading: true,
       search: "",
@@ -89,9 +110,25 @@ export default {
     };
   },
   mounted() {
+    if (this.$route.params.platform && this.$route.params.filename) {
+      if (process.browser) {
+        this.fileName = this.$route.params.filename;
+        this.dialog = true;
+      }
+    }
     this.refreshFiles();
   },
+  created() {},
   methods: {
+    closeDialog() {
+      this.dialog = false;
+      this.$router.push("/artikel-generator");
+    },
+    generateBlogger(name) {
+      this.$router.push("/artikel-generator/blogspot/" + name);
+      this.fileName = name;
+      this.dialog = true;
+    },
     editItem() {},
     deleteItem() {},
     refreshFiles() {

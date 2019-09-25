@@ -8,6 +8,7 @@ const FILE_PATH = path.join(__dirname, '../../files');
 const csv = require('csv-parser')
 var multer = require('multer')
 var md5 = require('md5');
+var export_filename = '';
 
 var bodyParser = require('body-parser');
 app.use(bodyParser.json());       // to support JSON-encoded bodies
@@ -43,6 +44,7 @@ app.post('/upload', upload.single('file'), async (req, res, next) => {
 
 app.post('/generate/:platform/:fileName', async (req, res, next) => {
   const fpath = path.join(FILE_PATH, 'upload', req.params.fileName);
+  export_filename = path.join(FILE_PATH, 'export/blogger', req.params.fileName.substr(0, req.params.fileName.lastIndexOf(".")) + ".xml");
   var data = [];
 
   const category = req.body.category;
@@ -57,35 +59,44 @@ app.post('/generate/:platform/:fileName', async (req, res, next) => {
     .on('data', (row) => {
       data.push(row);
     })
-    .on('end', () => {
+    .on('end', async () => {
       if (req.params.platform == 'blogger') {
-        res.send(generateBlogspot(data, category, start_date, end_date, file_name, judul, content));
+        /* empty file first */
+        var r = fs.writeFileSync(export_filename, '');
+        await generateBlogspot(data, category, start_date, end_date, file_name, judul, content);
+        res.send('ok');
       }
     });
 
 });
 
-function generateBlogspot(data = [], category, start_date, end_date, file_name, judul, content) {
-  var res = getXmlTemplateHeader();
+async function generateBlogspot(data = [], category, start_date, end_date, file_name, judul, content) {
 
-  category = category.split(',');
-  category = category.map(el => {
-    return getXmlTemplateCategory(el);
-  })
-  category = category.join('\n');
+  var result = getXmlTemplateHeader();
+
+  fs.appendFileSync(export_filename, result);
+
+  if (category) {
+    category = category.split(',');
+    category = category.map(el => {
+      return getXmlTemplateCategory(el);
+    })
+    category = category.join('\n');
+  }
 
 
-  data.forEach((d, index) => {
+  data.forEach(async (d, index) => {
     const id = getBloggerId(index);
     const author = getRandomName();
     var post_content = content;
     var date = getRandomtime(new Date(start_date), new Date(end_date));
     var post_title = judul;
+    var result = getXmlTemplateItem(category, id, author, post_content, date, post_title);
+    fs.appendFileSync(export_filename, result);
 
-    res = res + getXmlTemplateItem(category, id, author, post_content, date, post_title);
   });
-  res = res + getXmlTemplateFooter();
-  return res;
+  fs.appendFileSync(export_filename, getXmlTemplateFooter() + '\n');
+
 }
 
 app.delete('/delete/:folderName/:fileName', (req, res, next) => {
@@ -143,8 +154,8 @@ function getRandomName() {
 
 function getXmlTemplateHeader() {
   return '<?xml version="1.0" encoding="UTF-8"?> \n' +
-    '<ns0:feed xmlns:ns0=http://www.w3.org/2005/Atom">\n' +
-    '<ns0:generator>Blogger</ns0:generator> ';
+    '<ns0:feed xmlns:ns0="http://www.w3.org/2005/Atom">\n' +
+    '<ns0:generator>Blogger</ns0:generator> \n';
 }
 
 function getXmlTemplateItem(post_category = '', id = '', author = '', post_content = '', date = '', post_title = '') {
