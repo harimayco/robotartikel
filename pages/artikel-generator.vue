@@ -58,7 +58,7 @@
           <v-toolbar-title>Generate {{ this.$route.params.platform }}</v-toolbar-title>
           <div class="flex-grow-1"></div>
           <v-toolbar-items>
-            <v-btn dark text @click="closeDialog">Save</v-btn>
+            <v-btn dark text @click="closeDialog">Close</v-btn>
           </v-toolbar-items>
         </v-toolbar>
         <blogspot-generator v-if="fileName" v-bind:file-name="fileName" :key="fileName"></blogspot-generator>
@@ -81,7 +81,7 @@ export default {
       file: null,
       loading: true,
       search: "",
-      formData: new FormData(),
+      formData: "",
       headers: [
         {
           text: "File Name",
@@ -110,6 +110,7 @@ export default {
     };
   },
   mounted() {
+    this.formData = new FormData();
     if (this.$route.params.platform && this.$route.params.filename) {
       if (process.browser) {
         this.fileName = this.$route.params.filename;

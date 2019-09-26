@@ -5,10 +5,14 @@ const path = require('path');
 const fs = require('fs');
 const faker = require('faker/locale/id_ID');
 const FILE_PATH = path.join(__dirname, '../../files');
+const EXPORT_FILE_PATH = FILE_PATH + '/export/';
+const BLOGGER_EXPORT_FILE_PATH = EXPORT_FILE_PATH + '/blogger/';
+const WORDPRESS_EXPORT_FILE_PATH = EXPORT_FILE_PATH + '/wordpress/';
 const csv = require('csv-parser')
 var multer = require('multer')
 var md5 = require('md5');
-var export_filename = '';
+
+const available_headers = ['wilayah', 'keyword', 'promo'];
 
 var bodyParser = require('body-parser');
 app.use(bodyParser.json());       // to support JSON-encoded bodies
@@ -33,7 +37,7 @@ app.get('/get-uploaded-files', async (req, res, next) => {
   //joining path of directory
   const directoryPath = FILE_PATH + '/upload';
   //passsing directoryPath and callback function
-  var files_arr = await readFilesFromDirectory(directoryPath);
+  var files_arr = await readFiles(directoryPath);
 
   res.json(files_arr);
 });
@@ -43,38 +47,54 @@ app.post('/upload', upload.single('file'), async (req, res, next) => {
 });
 
 app.post('/generate/:platform/:fileName', async (req, res, next) => {
+  app.locals.export_filename = '';
+  app.locals.exported = [];
+  app.locals.export_path = '';
+
   const fpath = path.join(FILE_PATH, 'upload', req.params.fileName);
-  export_filename = path.join(FILE_PATH, 'export/blogger', req.params.fileName.substr(0, req.params.fileName.lastIndexOf(".")) + ".xml");
   var data = [];
 
   const category = req.body.category;
   const start_date = req.body.start_date;
   const end_date = req.body.end_date;
-  const file_name = req.body.file_name;
+  const file_name = req.body.file_name ? '-' + req.body.file_name : '';
   const judul = req.body.judul;
   const content = req.body.content;
 
   fs.createReadStream(fpath)
-    .pipe(csv({ headers: ['wilayah', 'keyword', 'promo'], separator: '|' }))
+    .pipe(csv({ headers: available_headers }))
     .on('data', (row) => {
       data.push(row);
     })
     .on('end', async () => {
+      var split_data = chunkArray(data, 1000);
       if (req.params.platform == 'blogger') {
         /* empty file first */
-        var r = fs.writeFileSync(export_filename, '');
-        await generateBlogspot(data, category, start_date, end_date, file_name, judul, content);
-        res.send('ok');
+        //console.log(split_data);
+
+        for (i = 1; i <= split_data.length; i++) {
+          var fn = changeExtension(req.params.fileName, file_name + '-' + i + '.xml');
+          app.locals.export_filename = path.join(BLOGGER_EXPORT_FILE_PATH, fn);
+          var r = fs.writeFileSync(app.locals.export_filename, '');
+          await generateBlogspot(split_data[i - 1], category, start_date, end_date, file_name, judul, content);
+          app.locals.exported.push(fn);
+        }
+
+        var result_files = await readFiles(BLOGGER_EXPORT_FILE_PATH, app.locals.exported);
+
+        res.json(result_files);
       }
     });
 
 });
 
+
+
 async function generateBlogspot(data = [], category, start_date, end_date, file_name, judul, content) {
 
   var result = getXmlTemplateHeader();
 
-  fs.appendFileSync(export_filename, result);
+  fs.appendFileSync(app.locals.export_filename, result);
 
   if (category) {
     category = category.split(',');
@@ -88,14 +108,15 @@ async function generateBlogspot(data = [], category, start_date, end_date, file_
   data.forEach(async (d, index) => {
     const id = getBloggerId(index);
     const author = getRandomName();
-    var post_content = content;
+    var post_content = replaceShortcode(content, d);
     var date = getRandomtime(new Date(start_date), new Date(end_date));
-    var post_title = judul;
+    var post_title = replaceShortcode(judul, d);
+    category = replaceShortcode(category, d);
     var result = getXmlTemplateItem(category, id, author, post_content, date, post_title);
-    fs.appendFileSync(export_filename, result);
+    fs.appendFileSync(app.locals.export_filename, result);
 
   });
-  fs.appendFileSync(export_filename, getXmlTemplateFooter() + '\n');
+  fs.appendFileSync(app.locals.export_filename, getXmlTemplateFooter() + '\n');
 
 }
 
@@ -112,8 +133,16 @@ function getBloggerId(index = 0) {
   return md5(microtime + index);
 }
 
-async function readFilesFromDirectory(directoryPath) {
+function changeExtension(str, ext) {
+  return str.substr(0, str.lastIndexOf(".")) + ext;
+
+}
+
+async function readFiles(directoryPath, filenames = null) {
   var files = fs.readdirSync(directoryPath);
+  if (filenames) {
+    files = filenames;
+  }
   var files_arr = [];
   await Promise.all(files.map(async file => {
     const { birthtime, size } = fs.statSync(directoryPath + '/' + file);
@@ -142,12 +171,25 @@ function getRandomtime(start, end, mode = 'blogspot') {
   return iso[1] + ' ' + iso[2];
 }
 
-function replaceShortcode(string, shortcode, replace) {
-  return string.replace(new RegExp(shortcode, "g"), replace);
+function replaceShortcode(string, d) {
+  string = string.replace(/\[[^\[]*keyword[^\]]*\]/ig, d.keyword.trim());
+  string = string.replace(/\[[^\[]*wilayah[^\]]*\]/ig, d.wilayah.trim());
+  string = string.replace(/\[[^\[]*promo[^\]]*\]/ig, d.promo.trim());
+  return string;
 }
 
 function getRandomName() {
   return faker.name.firstName();
+}
+
+function chunkArray(myArray, chunk_size) {
+  var results = [];
+
+  while (myArray.length) {
+    results.push(myArray.splice(0, chunk_size));
+  }
+
+  return results;
 }
 
 

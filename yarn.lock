@@ -4822,6 +4822,11 @@ multer@^1.4.2:
     type-is "^1.6.4"
     xtend "^4.0.0"
 
+multi-download@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/multi-download/-/multi-download-3.0.0.tgz#c169bcdb723d9c568856593a158a32d3d205d36a"
+  integrity sha512-AXumytZ+JGdwxWSNrOqNa2ATAQHb1u/K1kfWXoTkaOs0zL6rcy+QJJrYFRLe+T2jLtlTxM+8fx/qKXQS7+E6XQ==
+
 mustache@^2.3.0:
   version "2.3.2"
   resolved "https://registry.yarnpkg.com/mustache/-/mustache-2.3.2.tgz#a6d4d9c3f91d13359ab889a812954f9230a3d0c5"

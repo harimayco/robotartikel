@@ -2,88 +2,102 @@
   <v-form v-model="valid">
     <v-container>
       <v-row>
-        <v-col cols="12" md="12">
-          <v-card-title>File: {{ fileName }}</v-card-title>
-        </v-col>
-        <v-col cols="12" md="3">
-          <v-text-field
-            outlined
-            :rules="kategoriRules"
-            v-model="kategori"
-            label="Kategori (Spintax)"
-            required
-          ></v-text-field>
-        </v-col>
-        <v-col cols="12" md="3">
-          <v-menu
-            v-model="menu2"
-            :close-on-content-click="false"
-            :nudge-right="40"
-            transition="scale-transition"
-            offset-y
-            full-width
-            min-width="290px"
-          >
-            <template v-slot:activator="{ on }">
+        <v-col cols="12" md="6">
+          <v-row>
+            <v-col cols="12" md="12">
+              <span class="title">File: {{ fileName }}</span>
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field outlined v-model="nama_file" label="Nama File"></v-text-field>
+            </v-col>
+            <v-col cols="12" md="6">
               <v-text-field
-                v-model="start_date"
-                label="Start Date"
-                prepend-icon="mdi-calendar-range"
-                readonly
-                v-on="on"
                 outlined
+                :rules="kategoriRules"
+                v-model="kategori"
+                label="Kategori (Spintax)"
+                required
               ></v-text-field>
-            </template>
-            <v-date-picker v-model="start_date" @input="menu2 = false"></v-date-picker>
-          </v-menu>
-        </v-col>
-        <v-col cols="12" md="3">
-          <v-menu
-            v-model="menu3"
-            :close-on-content-click="false"
-            :nudge-right="40"
-            transition="scale-transition"
-            offset-y
-            full-width
-            min-width="290px"
-          >
-            <template v-slot:activator="{ on }">
-              <v-text-field
-                v-model="end_date"
-                label="End Date"
-                prepend-icon="mdi-calendar-range"
-                readonly
-                v-on="on"
-                outlined
-              ></v-text-field>
-            </template>
-            <v-date-picker v-model="end_date" @input="menu3 = false"></v-date-picker>
-          </v-menu>
-        </v-col>
-        <v-col cols="12" md="3">
-          <v-text-field outlined v-model="nama_file" label="Nama File"></v-text-field>
-        </v-col>
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-menu
+                v-model="menu2"
+                :close-on-content-click="false"
+                :nudge-right="40"
+                transition="scale-transition"
+                offset-y
+                full-width
+                min-width="290px"
+              >
+                <template v-slot:activator="{ on }">
+                  <v-text-field v-model="start_date" label="Start Date" readonly v-on="on" outlined></v-text-field>
+                </template>
+                <v-date-picker v-model="start_date" @input="menu2 = false"></v-date-picker>
+              </v-menu>
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-menu
+                v-model="menu3"
+                :close-on-content-click="false"
+                :nudge-right="40"
+                transition="scale-transition"
+                offset-y
+                full-width
+                min-width="290px"
+              >
+                <template v-slot:activator="{ on }">
+                  <v-text-field v-model="end_date" label="End Date" readonly v-on="on" outlined></v-text-field>
+                </template>
+                <v-date-picker v-model="end_date" @input="menu3 = false"></v-date-picker>
+              </v-menu>
+            </v-col>
 
-        <v-col cols="12" md="12">
-          <v-text-field
-            required
-            :rules="judulRules"
-            outlined
-            v-model="judul"
-            label="Judul Dengan Spintax"
-          ></v-text-field>
+            <v-col cols="12" md="12">
+              <v-text-field
+                required
+                :rules="judulRules"
+                outlined
+                v-model="judul"
+                label="Judul Dengan Spintax"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="12" md="12">
+              <v-textarea
+                required
+                :rules="artikelRules"
+                outlined
+                v-model="artikel"
+                label="Artikel Dengan Spintax"
+              ></v-textarea>
+            </v-col>
+            <v-col cols="12" md="12" class="text-right">
+              <v-btn
+                :disabled="!valid || loading"
+                @click="submitGenerate"
+                color="primary"
+              >{{btnText}}</v-btn>
+            </v-col>
+          </v-row>
         </v-col>
-        <v-col cols="12" md="12">
-          <v-textarea
-            required
-            :rules="artikelRules"
-            outlined
-            v-model="artikel"
-            label="Artikel Dengan Spintax"
-          ></v-textarea>
-        </v-col>
-        <v-col cols="12" md="12" class="text-right">
-          <v-btn :disabled="!valid || loading" @click="submitGenerate" color="primary">{{btnText}}</v-btn>
+        <v-col cols="12" v-if="exported.length" md="6" class>
+          <v-card-title>
+            Exported Files &nbsp;&nbsp;&nbsp;
+            <v-btn color="success" @click="downloadAll">Download All</v-btn>
+          </v-card-title>
+          <v-data-table
+            :headers="headers"
+            :items-per-page="10"
+            :sort-by="['name']"
+            :sort-desc="[false]"
+            :items="exported_files"
+            class="elevation-6"
+          >
+            <template v-slot:item.url="{ item }">
+              <a :href="item.url" download>
+                <v-icon small class="mdi mdi-download"></v-icon>
+              </a>
+            </template>
+          </v-data-table>
         </v-col>
       </v-row>
     </v-container>
@@ -91,10 +105,25 @@
 </template>
 
 <script>
+import multiDownload from "multi-download";
 export default {
   props: ["fileName"],
   data() {
     return {
+      headers: [
+        {
+          text: "File Name",
+          value: "name"
+        },
+        {
+          text: "Ukuran",
+          value: "size"
+        },
+        {
+          text: "Download",
+          value: "url"
+        }
+      ],
       loading: false,
       end_date: new Date().toISOString().substr(0, 10),
       start_date: new Date().toISOString().substr(0, 10),
@@ -109,7 +138,8 @@ export default {
       judul: null,
       judulRules: [v => !!v || "Silahkan isi Judul"],
       artikelRules: [v => !!v || "Silahkan isi Artikel"],
-      kategoriRules: [v => !!v || "Silahkan isi Kategori"]
+      kategoriRules: [v => !!v || "Silahkan isi Kategori"],
+      exported: []
     };
   },
   computed: {
@@ -120,9 +150,29 @@ export default {
 
       return "Generate Artikel";
     },
+    exported_urls() {
+      return this.exported_files.map(el => {
+        return el.url;
+      });
+    },
+    exported_files() {
+      return this.exported.map(el => {
+        return {
+          name: el.name,
+          size: el.size,
+          url: "/files/export/blogger/" + el.name
+        };
+      });
+    },
+
     google_token() {
       return this.$auth.getToken("google");
     }
+  },
+  mounted() {
+    let today = new Date();
+    this.start_date = today.setDate(today.getDate() - 30);
+    this.start_date = today.toISOString().substr(0, 10);
   },
   methods: {
     async google() {
@@ -146,8 +196,12 @@ export default {
         })
         .then(res => {
           this.loading = false;
-          alert(res.data);
+          this.exported = res.data;
+          //alert(res.data);
         });
+    },
+    downloadAll() {
+      multiDownload(this.exported_urls);
     }
   }
 };
