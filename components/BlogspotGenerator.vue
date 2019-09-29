@@ -19,6 +19,19 @@
                 required
               ></v-text-field>
             </v-col>
+            <v-col v-if="platform == 'wordpress'" cols="12" md="6">
+              <v-text-field
+                outlined
+                :rules="tagRules"
+                v-model="tags"
+                label="Tags (Spintax)"
+                required
+              ></v-text-field>
+            </v-col>
+            <v-col v-if="platform == 'wordpress'" cols="12" md="6">
+              <v-select v-model="status" :items="status_select" label="Status" outlined></v-select>
+            </v-col>
+
             <v-col cols="12" md="6">
               <v-menu
                 v-model="menu2"
@@ -87,6 +100,7 @@
           <v-data-table
             :headers="headers"
             :items-per-page="10"
+            :loading="loading"
             :sort-by="['name']"
             :sort-desc="[false]"
             :items="exported_files"
@@ -107,7 +121,7 @@
 <script>
 import multiDownload from "multi-download";
 export default {
-  props: ["fileName"],
+  props: ["fileName", "platform"],
   data() {
     return {
       headers: [
@@ -124,19 +138,25 @@ export default {
           value: "url"
         }
       ],
+      status_select: ["publish", "draft"],
       loading: false,
       end_date: new Date().toISOString().substr(0, 10),
       start_date: new Date().toISOString().substr(0, 10),
       kategori: null,
       nama_file: null,
+      status: "publish",
       menu2: false,
       menu3: false,
       valid: false,
+      tag: "",
       artikel: null,
       import_file: null,
       parseCsv: null,
       judul: null,
       judulRules: [v => !!v || "Silahkan isi Judul"],
+      tagsRules: [
+        v => (!!v && this.platform == "wordpress") || "Silahkan isi Tags"
+      ],
       artikelRules: [v => !!v || "Silahkan isi Artikel"],
       kategoriRules: [v => !!v || "Silahkan isi Kategori"],
       exported: []
@@ -160,7 +180,7 @@ export default {
         return {
           name: el.name,
           size: el.size,
-          url: "/files/export/blogger/" + el.name
+          url: "/files/export/" + this.platform + "/" + el.name
         };
       });
     },
@@ -186,13 +206,15 @@ export default {
     submitGenerate() {
       this.loading = true;
       this.$axios
-        .post("/api/generate/blogger/" + this.fileName, {
+        .post("/api/generate/" + this.platform + "/" + this.fileName, {
           category: this.kategori,
           judul: this.judul,
           start_date: this.start_date,
           end_date: this.end_date,
           content: this.artikel,
-          nama_file: this.nama_file
+          nama_file: this.nama_file,
+          tags: this.tags,
+          status: this.status
         })
         .then(res => {
           this.loading = false;

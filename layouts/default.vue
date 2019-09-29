@@ -1,6 +1,28 @@
 <template>
   <v-app dark>
     <v-navigation-drawer v-model="drawer" :mini-variant="miniVariant" :clipped="clipped" fixed app>
+      <template v-slot:prepend>
+        <v-list>
+          <v-list-item>
+            <v-list-item-avatar>
+              <v-img src="https://randomuser.me/api/portraits/women/85.jpg"></v-img>
+            </v-list-item-avatar>
+          </v-list-item>
+
+          <v-list-item link two-line>
+            <v-list-item-content>
+              <v-list-item-title class="title">Sandra Adams</v-list-item-title>
+              <v-list-item-subtitle>sandra_a88@gmail.com</v-list-item-subtitle>
+            </v-list-item-content>
+            <v-list-item-action>
+              <v-icon>mdi-menu-down</v-icon>
+            </v-list-item-action>
+          </v-list-item>
+        </v-list>
+      </template>
+
+      <v-divider></v-divider>
+
       <v-list>
         <v-list-item v-for="(item, i) in items" :key="i" :to="item.to" router exact>
           <v-list-item-action>
@@ -48,7 +70,7 @@ export default {
   },
   data() {
     return {
-      clipped: true,
+      clipped: false,
       drawer: true,
       fixed: true,
       items: [

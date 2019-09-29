@@ -39,8 +39,8 @@
         class="elevation-1"
       >
         <template v-slot:item.export="{ item }">
-          <v-icon small class="mdi mdi-blogger" @click="generateBlogger(item.name)"></v-icon>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
-          <v-icon small class="mdi mdi-wordpress" @click="editItem(item)"></v-icon>
+          <v-icon small class="mdi mdi-blogger" @click="generate(item.name, 'blogger')"></v-icon>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+          <v-icon small class="mdi mdi-wordpress" @click="generate(item.name, 'wordpress')"></v-icon>
         </template>
 
         <template v-slot:item.action="{ item }">
@@ -61,7 +61,12 @@
             <v-btn dark text @click="closeDialog">Close</v-btn>
           </v-toolbar-items>
         </v-toolbar>
-        <blogspot-generator v-if="fileName" v-bind:file-name="fileName" :key="fileName"></blogspot-generator>
+        <blogspot-generator
+          v-if="fileName"
+          v-bind:platform="$route.params.platform"
+          v-bind:file-name="fileName"
+          :key="fileName"
+        ></blogspot-generator>
       </v-card>
     </v-dialog>
   </div>
@@ -74,6 +79,7 @@ export default {
     BlogspotGenerator
   },
   loading: true,
+
   data() {
     return {
       fileName: null,
@@ -125,8 +131,8 @@ export default {
       this.dialog = false;
       this.$router.push("/artikel-generator");
     },
-    generateBlogger(name) {
-      this.$router.push("/artikel-generator/blogspot/" + name);
+    generate(name, platform = "blogger") {
+      this.$router.push("/artikel-generator/" + platform + "/" + name);
       this.fileName = name;
       this.dialog = true;
     },
