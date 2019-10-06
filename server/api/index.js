@@ -95,6 +95,7 @@ app.post('/generate/:platform/:fileName', async (req, res, next) => {
           app.locals.export_filename = path.join(BLOGGER_EXPORT_FILE_PATH, fn);
           var r = fs.writeFileSync(app.locals.export_filename, '');
           await generateXml(split_data[i - 1], category, start_date, end_date, file_name, judul, content);
+          fs.appendFileSync(app.locals.export_filename, getXmlTemplateFooter(req.params.platform ) + '\n');
           app.locals.exported.push(fn);
         }
         ex_path = BLOGGER_EXPORT_FILE_PATH;
@@ -107,6 +108,7 @@ app.post('/generate/:platform/:fileName', async (req, res, next) => {
           var r = fs.writeFileSync(app.locals.export_filename, '');
           //console.log(tags);
           await generateXml(split_data[i - 1], category, start_date, end_date, file_name, judul, content, tags, status, req.params.platform);
+          fs.appendFileSync(app.locals.export_filename, getXmlTemplateFooter(req.params.platform ) + '\n');
           app.locals.exported.push(fn);
         };
 
@@ -130,35 +132,42 @@ async function generateXml(data = [], category, start_date, end_date, file_name,
 
   if (category) {
     category = category.split(',');
-    category = category.map(el => {
-      return getXmlTemplateCategory(el, platform);
-    })
-    category = category.join('\n');
   }
-  //console.log(tags);
   if (tags) {
     tags = tags.split(',');
-    tags = tags.map(e => {
-      return getXmlTemplateTags(e);
-    })
-    tags = tags.join('\n');
   }
 
-
   data.forEach(async (d, index) => {
+  
     const id = getBloggerId(index);
     const author = getRandomName();
-    var post_content = replaceShortcode(content, d);
+    var post_content = spintax(replaceShortcode(content, d));
     var date = getRandomtime(new Date(start_date), new Date(end_date), platform);
+    var cat_res = '';
+    var tag_res = '';
+    if (category.length) {
+      category = await category.map(el => {
+        return getXmlTemplateCategory(el, platform);
+      })
+      cat_res = category.join('\n');
+    }
+    //console.log(tags);
+    if (tags.length) {
 
-    var post_title = replaceShortcode(judul, d);
-    category = replaceShortcode(category, d);
-    tags = replaceShortcode(tags, d);
-    var result = getXmlTemplateItem(category, id, author, post_content, date, post_title, tags, status, platform);
+      tags = await tags.map(e => {
+        return getXmlTemplateTags(e);
+      })
+      tag_res = tags.join('\n');
+    }
+
+    var post_title = spintax(replaceShortcode(judul, d));
+    cat_res = replaceShortcode(cat_res, d);
+    tag_res = replaceShortcode(tag_res, d);
+    var result = getXmlTemplateItem(cat_res, id, author, post_content, date, post_title, tag_res, status, platform);
     fs.appendFileSync(app.locals.export_filename, result);
 
   });
-  fs.appendFileSync(app.locals.export_filename, getXmlTemplateFooter(platform) + '\n');
+  
 
 }
 
@@ -289,6 +298,7 @@ function getXmlTemplateItem(post_category = '', id = '', author = '', post_conte
 
 
 function getXmlTemplateCategory(cat = '', platform = 'blogger') {
+  cat = spintax(cat);
   let category = '';
   if (platform == 'blogger') {
     category = '<ns0:category scheme="http://www.blogger.com/atom/ns#" term="' + cat + '" />';
@@ -306,6 +316,7 @@ function getXmlTemplateTags(tag = '') {
   if (tag == '') {
     return '';
   }
+  tag = spintax(tag);
   let tag_slug = slugify(tag);
   return '<category domain="post_tag" nicename="' + tag_slug + '"><![CDATA[' + tag + ']]></category>';
 
@@ -319,6 +330,20 @@ function getXmlTemplateFooter(platform = 'blogger') {
     footer = '</channel></rss>';
   }
   return footer;
+}
+
+function spintax(text) {
+
+  var matches, options, random;
+
+  var regEx = new RegExp(/{([^{}]+?)}/);
+
+  while ((matches = regEx.exec(text)) !== null) {
+    options = matches[1].split("|");
+    random = Math.floor(Math.random() * options.length);
+    text = text.replace(matches[0], options[random]);
+  }
+  return text;
 }
 // export the server middleware
 module.exports = {
