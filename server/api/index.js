@@ -95,7 +95,7 @@ app.post('/generate/:platform/:fileName', async (req, res, next) => {
           app.locals.export_filename = path.join(BLOGGER_EXPORT_FILE_PATH, fn);
           var r = fs.writeFileSync(app.locals.export_filename, '');
           await generateXml(split_data[i - 1], category, start_date, end_date, file_name, judul, content);
-          fs.appendFileSync(app.locals.export_filename, getXmlTemplateFooter(req.params.platform ) + '\n');
+          fs.appendFileSync(app.locals.export_filename, getXmlTemplateFooter(req.params.platform) + '\n');
           app.locals.exported.push(fn);
         }
         ex_path = BLOGGER_EXPORT_FILE_PATH;
@@ -108,7 +108,7 @@ app.post('/generate/:platform/:fileName', async (req, res, next) => {
           var r = fs.writeFileSync(app.locals.export_filename, '');
           //console.log(tags);
           await generateXml(split_data[i - 1], category, start_date, end_date, file_name, judul, content, tags, status, req.params.platform);
-          fs.appendFileSync(app.locals.export_filename, getXmlTemplateFooter(req.params.platform ) + '\n');
+          fs.appendFileSync(app.locals.export_filename, getXmlTemplateFooter(req.params.platform) + '\n');
           app.locals.exported.push(fn);
         };
 
@@ -138,7 +138,7 @@ async function generateXml(data = [], category, start_date, end_date, file_name,
   }
 
   data.forEach(async (d, index) => {
-  
+
     const id = getBloggerId(index);
     const author = getRandomName();
     var post_content = spintax(replaceShortcode(content, d));
@@ -167,7 +167,7 @@ async function generateXml(data = [], category, start_date, end_date, file_name,
     fs.appendFileSync(app.locals.export_filename, result);
 
   });
-  
+
 
 }
 
@@ -208,14 +208,14 @@ function humanFileSize(size) {
   return (size / Math.pow(1024, i)).toFixed(2) * 1 + ' ' + ['B', 'kB', 'MB', 'GB', 'TB'][i];
 };
 
-function getRandomtime(start, end, mode = 'blogspot') {
+function getRandomtime(start, end, mode = 'blogger') {
 
   // get the difference between the 2 dates, multiply it by 0-1,
   // and add it to the start date to get a new date
   var diff = end.getTime() - start.getTime();
   var new_diff = diff * Math.random();
   var date = new Date(start.getTime() + new_diff);
-  if (mode === 'blogspot') {
+  if (mode === 'blogger') {
     return date.toISOString();
   }
 
