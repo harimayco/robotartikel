@@ -81,10 +81,14 @@ app.post('/generate/:platform/:fileName', async (req, res, next) => {
   fs.createReadStream(fpath)
     .pipe(csv({ headers: available_headers }))
     .on('data', (row) => {
-      data.push(row);
+      if (row.wilayah != '' && row.keyword != '' && row.promo != '') {
+        data.push(row);
+      }
+
     })
     .on('end', async () => {
       var split_data = chunkArray(data, 1000);
+      //console.log(split_data.length);
       let ex_path = '';
       if (req.params.platform == 'blogger') {
         /* empty file first */
