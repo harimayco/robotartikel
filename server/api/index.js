@@ -12,6 +12,7 @@ const csv = require('csv-parser')
 var multer = require('multer')
 var md5 = require('md5');
 var slugify = require('slugify')
+var json = require('./dict.json');
 
 
 const available_headers = ['wilayah', 'keyword', 'promo'];
@@ -58,6 +59,23 @@ app.get('/get-uploaded-files', async (req, res, next) => {
 
 app.post('/upload', upload.single('file'), async (req, res, next) => {
   res.json({ res: 'Ok!' });
+});
+
+app.post('/generate-article', upload.single('file'), async (req, res, next) => {
+  if (!req.body.content) {
+    return res.send('No result');
+  }
+  var result = '';
+  var text_arr = req.body.content.split(' ');
+  for (var i = 0; i < text_arr.length; i++) {
+    if (json[text_arr[i]]) {
+      result = result + '{' + text_arr[i] + '|' + json[text_arr[i]].sinonim.join('|') + '} ';
+    } else {
+      result = result + text_arr[i] + ' ';
+    }
+  }
+
+  res.send(result);
 });
 
 app.post('/generate/:platform/:fileName', async (req, res, next) => {

@@ -153,7 +153,7 @@ export default {
           }
         })
         .then(() => {
-          alert("Success!");
+          //alert("Success!");
           this.formData = new FormData();
 
           this.refreshFiles();

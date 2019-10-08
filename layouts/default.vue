@@ -86,16 +86,16 @@ export default {
           to: "/artikel-generator"
         },
         {
-          icon: "mdi-blogger",
-          title: "Blogspot Generator",
-          to: "/blogspot"
+          icon: "mdi-pencil",
+          title: "Spin Artikel",
+          to: "/spin-artikel"
         },
 
-        {
+        /*{
           icon: "mdi-wordpress",
           title: "Wordpress Generator",
           to: "/wordpress-xml-generator"
-        },
+        },*/
         {
           icon: "mdi-chart-bubble",
           title: "Blog List",
