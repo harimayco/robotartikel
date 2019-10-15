@@ -3,11 +3,13 @@ const express = require('express')
 const app = express()
 const path = require('path');
 const fs = require('fs');
+const cheerio = require('cheerio')
 const faker = require('faker/locale/id_ID');
 const FILE_PATH = path.join(__dirname, '../../files');
 const EXPORT_FILE_PATH = FILE_PATH + '/export/';
 const BLOGGER_EXPORT_FILE_PATH = EXPORT_FILE_PATH + '/blogger/';
 const WORDPRESS_EXPORT_FILE_PATH = EXPORT_FILE_PATH + '/wordpress/';
+const axios = require('axios');
 const csv = require('csv-parser')
 var multer = require('multer')
 var md5 = require('md5');
@@ -62,20 +64,19 @@ app.post('/upload', upload.single('file'), async (req, res, next) => {
 });
 
 app.post('/generate-article', upload.single('file'), async (req, res, next) => {
-  if (!req.body.content) {
-    return res.send('No result');
-  }
-  var result = '';
-  var text_arr = req.body.content.split(' ');
-  for (var i = 0; i < text_arr.length; i++) {
-    if (json[text_arr[i]]) {
-      result = result + '{' + text_arr[i] + '|' + json[text_arr[i]].sinonim.join('|') + '} ';
-    } else {
-      result = result + text_arr[i] + ' ';
-    }
-  }
 
-  res.send(result);
+  const params = new URLSearchParams();
+  params.append("content", req.body.content);
+  params.append("submit", 'Spintax 1');
+  axios
+    .post("http://www.spinnerartikelindonesia.com/", params)
+    .then(result => {
+      const $ = cheerio.load(result.data);
+      res.send($('textarea[name="spintax"]').text());
+    })
+    .catch(err => {
+      res.send('error');
+    });
 });
 
 app.post('/generate/:platform/:fileName', async (req, res, next) => {
