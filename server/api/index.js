@@ -15,6 +15,7 @@ var multer = require('multer')
 var md5 = require('md5');
 var slugify = require('slugify')
 var json = require('./dict.json');
+const createCsvWriter = require('csv-writer').createArrayCsvWriter;
 
 
 const available_headers = ['wilayah', 'keyword', 'promo'];
@@ -147,20 +148,30 @@ app.post('/generate/:platform/:fileName', async (req, res, next) => {
 
 
 
-async function generateXml(data = [], category, start_date, end_date, file_name, judul, content, tags = '', status = 'draft', platform = 'blogger') {
+async function generateXml(data = [], cats, start_date, end_date, file_name, judul, content, tags = '', status = 'draft', platform = 'blogger') {
 
   var result = getXmlTemplateHeader(platform);
 
   fs.appendFileSync(app.locals.export_filename, result);
 
-  if (category) {
-    category = category.split(',');
+  if (cats) {
+    category = cats.split(',');
   }
   if (tags) {
     tags = tags.split(',');
   }
 
-  data.forEach(async (d, index) => {
+  const csvWriter = createCsvWriter({
+    path: app.locals.export_filename + '.csv',
+    header: ['judul', 'content', 'kategori']
+  });
+  var csv_export_res = [];
+
+  for (var index = 0; index < data.length; index++) {
+
+    //data.forEach(async (d, index) => {
+    var d = data[index];
+
 
     const id = getBloggerId(index);
     const author = getRandomName();
@@ -168,6 +179,8 @@ async function generateXml(data = [], category, start_date, end_date, file_name,
     var date = getRandomtime(new Date(start_date), new Date(end_date), platform);
     var cat_res = '';
     var tag_res = '';
+
+
     if (category.length) {
       category = await category.map(el => {
         return getXmlTemplateCategory(el, platform);
@@ -189,7 +202,31 @@ async function generateXml(data = [], category, start_date, end_date, file_name,
     var result = getXmlTemplateItem(cat_res, id, author, post_content, date, post_title, tag_res, status, platform);
     fs.appendFileSync(app.locals.export_filename, result);
 
+    csv_export_res.push([post_title, post_content, cats]);
+
+
+    //var
+    //console.log(csv_export_res);
+
+    //});
+  }
+  /*
+  csvWriter.writeRecords(csv_export_res).then(() => {
+    //console.log(index);
   });
+  */
+  //console.log(csv_export_res);
+  try {
+    csvWriter.writeRecords(csv_export_res).then(() => {
+      //console.log(index);
+    });
+  } catch (e) {
+
+  }
+
+  //console.log(csv_export_res.length);
+
+
 
 
 }

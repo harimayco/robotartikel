@@ -90,6 +90,11 @@ export default {
           title: "Spin Artikel",
           to: "/spin-artikel"
         },
+        {
+          icon: "mdi-pencil",
+          title: "Split Csv",
+          to: "/split-csv"
+        },
 
         /*{
           icon: "mdi-wordpress",

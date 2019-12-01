@@ -110,6 +110,8 @@
               <a :href="item.url" download>
                 <v-icon small class="mdi mdi-download"></v-icon>
               </a>
+              &nbsp;
+              <a :href="item.url + '.csv'" download>CSV</a>
             </template>
           </v-data-table>
         </v-col>
