@@ -202,7 +202,7 @@ async function generateXml(data = [], cats, start_date, end_date, file_name, jud
     var result = getXmlTemplateItem(cat_res, id, author, post_content, date, post_title, tag_res, status, platform);
     fs.appendFileSync(app.locals.export_filename, result);
 
-    csv_export_res.push([post_title, post_content, cats]);
+    csv_export_res.push([post_title, post_content, replaceShortcode(cats, d)]);
 
 
     //var
