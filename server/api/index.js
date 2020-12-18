@@ -18,7 +18,7 @@ var json = require('./dict.json');
 const createCsvWriter = require('csv-writer').createArrayCsvWriter;
 
 
-const available_headers = ['wilayah', 'keyword', 'promo'];
+const available_headers = ['wilayah', 'keyword', 'promo', 'hashtag'];
 
 var bodyParser = require('body-parser');
 app.use(bodyParser.json());       // to support JSON-encoded bodies
@@ -101,7 +101,7 @@ app.post('/generate/:platform/:fileName', async (req, res, next) => {
   fs.createReadStream(fpath)
     .pipe(csv({ headers: available_headers }))
     .on('data', (row) => {
-      if (row.wilayah != '' && row.keyword != '' && row.promo != '') {
+      if (row.wilayah != '' && row.keyword != '' && row.promo != '' && row.hashtag != '' ) {
         data.push(row);
       }
 
@@ -287,6 +287,7 @@ function replaceShortcode(string, d) {
   string = string.replace(/\[[^\[]*keyword[^\]]*\]/ig, d.keyword.trim());
   string = string.replace(/\[[^\[]*wilayah[^\]]*\]/ig, d.wilayah.trim());
   string = string.replace(/\[[^\[]*promo[^\]]*\]/ig, d.promo.trim());
+  string = string.replace(/\[[^\[]*hashtag[^\]]*\]/ig, d.hashtag.trim());
   return string;
 }
 
