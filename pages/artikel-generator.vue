@@ -39,8 +39,8 @@
         class="elevation-1"
       >
         <template v-slot:item.export="{ item }">
-          <v-icon small class="mdi mdi-blogger" @click="generate(item.name, 'blogger')"></v-icon>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
-          <v-icon small class="mdi mdi-wordpress" @click="generate(item.name, 'wordpress')"></v-icon>
+          <v-icon small @click="generate(item.name, 'blogger')">mdi-alpha-b-box</v-icon>&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;
+          <v-icon small @click="generate(item.name, 'wordpress')">mdi-wordpress</v-icon>
         </template>
 
         <template v-slot:item.action="{ item }">
